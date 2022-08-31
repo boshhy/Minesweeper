@@ -212,11 +212,15 @@ while True:
 
     # Make move and update AI knowledge
     if move:
+        print("from main game: ", move)
         if game.is_mine(move):
             lost = True
         else:
             nearby = game.nearby_mines(move)
+            print("passed nearby")
             revealed.add(move)
+            print("passed moved")
             ai.add_knowledge(move, nearby)
+            print("passed add knowledge")
 
     pygame.display.flip()

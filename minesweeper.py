@@ -202,9 +202,10 @@ class MinesweeperAI():
 
         self.moves_made.add(cell)
         self.mark_safe(cell)
+        print("passed 1 and 2")
 
         i, j = cell
-        new_set = []
+        new_set = set()
 
         for r in range(i - 1, i + 2):
             for c in range(j - 1, j + 2):
@@ -218,34 +219,42 @@ class MinesweeperAI():
                     continue
 
                 if 0 <= r < self.height and 0 <= c < self.width:
-                    new_set.append(u_cell)
+                    new_set.add(u_cell)
 
         new_sentence = Sentence(new_set, count)
         self.knowledge.append(new_sentence)
+        print("passed 3")
 
         # 4 Need to comeback to this.
+        # Need to test.
 
-        for sentence in self.knowledge:
-            if sentence.known_mines():
-                for cell in sentence.known_mines().copy():
-                    self.mark_mine(cell)
-            if sentence.known_safes():
-                for cell in sentence.known_safes().copy():
-                    self.mark_safe(cell)
+        # for sentence in self.knowledge:
+        #     if sentence.known_mines():
+        #         for cell in sentence.known_mines().copy():
+        #             self.mark_mine(cell)
+        #     if sentence.known_safes():
+        #         for cell in sentence.known_safes().copy():
+        #             self.mark_safe(cell)
 
-        # for cell in new_sentence.known_mines().copy():
-        #     self.mark_mine(cell)
-        # for cell in new_sentence.known_safes().copy():
-        #     self.mark_safe(cell)
+        for cell in new_sentence.known_mines().copy():
+            self.mark_mine(cell)
+        for cell in new_sentence.known_safes().copy():
+            self.mark_safe(cell)
 
         # 5
-
         for sentence in self.knowledge:
             if new_sentence.cells.issubset(sentence.cells) and sentence.count > 0 and new_sentence != sentence:
+                print("in if statement of 5")
                 new_sub = sentence.cells.difference(new_sentence.cells)
+                print("in 5 passed new_sub")
                 current_sentence = Sentence(
                     list(new_sub), sentence.count - new_sentence.count)
-                self.knowledge.append(current_sentence)
+                print("in 5 passed current_sentence")
+                if current_sentence not in self.knowledge:
+                    self.knowledge.append(current_sentence)
+                print("in 5 appended to self.knowledge")
+
+        # print("passed 5")
 
     def make_safe_move(self):
         """
@@ -258,7 +267,7 @@ class MinesweeperAI():
         """
         moves = self.safes - self.moves_made
         if moves:
-            print("making a safe move")
+            print("making a safe move from: ", moves)
             return random.choice(tuple(moves))
         return None
 
