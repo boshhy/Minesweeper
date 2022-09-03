@@ -171,7 +171,10 @@ class MinesweeperAI():
         Marks a cell as a mine, and updates all knowledge
         to mark that cell as a mine as well.
         """
+        # Add the cell to the mines set
         self.mines.add(cell)
+        # For every sentence in knowledge update the
+        # sentence to mark the new cell(mine) as a mine
         for sentence in self.knowledge:
             sentence.mark_mine(cell)
 
@@ -180,7 +183,10 @@ class MinesweeperAI():
         Marks a cell as safe, and updates all knowledge
         to mark that cell as safe as well.
         """
+        # Add the cell to the safes set
         self.safes.add(cell)
+        # For every sentence in knowledge update the
+        # sentence to mark the new cell(safe) as a safe
         for sentence in self.knowledge:
             sentence.mark_safe(cell)
 
@@ -199,45 +205,85 @@ class MinesweeperAI():
             5) add any new sentences to the AI's knowledge base
                if they can be inferred from existing knowledge
         """
-
+        # 1) Mark the cell as a move that has been made
         self.moves_made.add(cell)
+        # 2) Mark the cell as safe
         self.mark_safe(cell)
 
+        # 3) Add a new sentence to the AI's knowledge base
+        # based on the value of `cell` and `count`
+        # Take the location of the cell
+        # and create an empty set for undetermined cells
         i, j = cell
         new_set = set()
 
+        # For the cell go look at surrounding cells
         for r in range(i - 1, i + 2):
             for c in range(j - 1, j + 2):
+                # Create a new cell for current currounding cell
+                # We only want untracked cells so call it u_cell
                 u_cell = (r, c)
 
+                # Continue if u_cell is the original cell
+                # or if the cell is already in safes
                 if cell == u_cell or u_cell in self.safes:
                     continue
 
+                # If already in mines update count
+                # and continue to next cell
                 if u_cell in self.mines:
                     count -= 1
                     continue
 
+                # Make sure we don't go out of bounds this is for
+                # the edge and corner cases, if everything checks out
+                # add the set to 'new_set' of undetermined cells
                 if 0 <= r < self.height and 0 <= c < self.width:
                     new_set.add(u_cell)
 
+        # Create a new sentence using the new_set and the count
         new_sentence = Sentence(new_set, count)
+        # Add the new sentence to knowledge base
         self.knowledge.append(new_sentence)
 
-        # 4
+        # 4) mark any additional cells as safe or as mines
+        # if it can be concluded based on the AI's knowledge base
+        # We know that we have just added a new sentence so we have
+        # to go mark any new mines and safe mines in our knowledge base
+        # If we can determine a new mine or a safe mine we have to
+        # update all sentences thay might contain the new mine or safes
+        # This need to look at every sentence because a new mine or safes
+        # will be subtracted from other sentences and we need to see if the
+        # updated sentence will also return a set of mines or safes
         for sentence in self.knowledge:
+            # If sentence return a non empty set for mines we need to mark them
             if sentence.known_mines():
+                # For every cell in our returned mine set we need to mark it as a mine
                 for cell in sentence.known_mines().copy():
                     self.mark_mine(cell)
+            # If sentence return a non empty set for safes we need to mark them
             if sentence.known_safes():
+                # For every cell in our returned safe set we need to mark it as a safe
                 for cell in sentence.known_safes().copy():
                     self.mark_safe(cell)
 
-        # 5
+        # 5) add any new sentences to the AI's knowledge base
+        # if they can be inferred from existing knowledge
+        # Now that we have some knowledge either from the clicked cell or
+        # by the updated marked safes or maked mines from step 4,
+        # we can see if we can create new sentences by seeing if the
+        # new sentence created from the cell clicked is a subset of the other
+        # sentences in out knowledge base. Keep in mind that step 4 might
+        # have changed some sentences so we got to check every sentence
         for sentence in self.knowledge:
+            # If new sentece is a subset of a sentence and we have some mines
             if new_sentence.cells.issubset(sentence.cells) and sentence.count > 0 and new_sentence != sentence:
+                # Get the difference in sentences to create a new set(new_sub)
                 new_sub = sentence.cells.difference(new_sentence.cells)
+                # Create a new sentence using the new set(new_sub) and the difference in count
                 current_sentence = Sentence(
                     list(new_sub), sentence.count - new_sentence.count)
+                # If the newly created sentence is not in knowledge, then add it
                 if current_sentence not in self.knowledge:
                     self.knowledge.append(current_sentence)
 
@@ -250,7 +296,9 @@ class MinesweeperAI():
         This function may use the knowledge in self.mines, self.safes
         and self.moves_made, but should not modify any of those values.
         """
+        # Get all available safe moves
         moves = self.safes - self.moves_made
+        # If the moves result is not empty then choose a random cell
         if moves:
             return random.choice(tuple(moves))
         return None
@@ -262,11 +310,16 @@ class MinesweeperAI():
             1) have not already been chosen, and
             2) are not known to be mines
         """
+        # Create an empty list for available moves
         moves = []
+        # Go through all the cells in the game board
         for r in range(self.height):
             for c in range(self.width):
+                # If the cell has not been played yet and it is not a mine
+                # then we can append it to out available moves list
                 if (r, c) not in self.moves_made and (r, c) not in self.mines:
                     moves.append((r, c))
+        # If there is available moves to be made choose one at random
         if len(moves) != 0:
             return random.choice(moves)
         return None
